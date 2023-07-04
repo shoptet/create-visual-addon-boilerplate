@@ -1,0 +1,17 @@
+{
+  "name": "create-shoptet-visual-addon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/pavelhusa/test-cli.git",
+  "author": "Pavel Husa <husa@shoptet.cz>",
+  "description": "Create Shoptet Visual Addon",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "run": "index.js"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^2.3.0",
+    "inquirer": "^9.2.7"
+  }
+}
