@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^2.3.0",
+    "@npmcli/package-json": "^4.0.0",
     "inquirer": "^9.2.7"
   }
 }
