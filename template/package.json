@@ -1,5 +1,11 @@
 {
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "minify": "yarn minifyHeader && yarn minifyFooter && yarn minifyOrderFinale",
+    "minifyHeader": "minify src/header/*.js > dist/scripts.header.min.js && minify src/header/*.css > dist/styles.header.min.css",
+    "minifyFooter": "minify src/footer/*.js > dist/scripts.footer.min.js && minify src/footer/*.css > dist/styles.footer.min.css",
+    "minifyOrderFinale": "minify src/orderFinale/*.js > dist/scripts.orderFinale.min.js && minify src/orderFinale/*.css > dist/styles.orderFinale.min.css"
+  }
 }

@@ -33,28 +33,24 @@ try {
     if (err.code !== 'EEXIST') throw err;
 }
 
-// add name and devDependecny to package.json using package-json
-/*
-    "name": "shoptet-${addonName}",
-    "devDependencies": {
-        "shp-bender": "git+https://github.com/shoptet/shoptet-bender.git"
-    }
-*/
 const addonPath = `./${addonName}/`;
 const pkgJson = await PackageJson.load(addonPath);
 pkgJson.update({
     name: addonName,
     devDependencies: {
         ...pkgJson.content.devDependencies,
-        'shp-bender': 'git+https://github.com/shoptet/shoptet-bender.git',
+        'shp-bender': 'git+https://github.com/shoptet/shoptet-bender.git@addon-boilerplate',
     },
 });
+
 if (remoteEshopUrl) {
     pkgJson.update({
         scripts: {
+            ...pkgJson.content.scripts,
             'dev': `shp-bender --remote ${remoteEshopUrl}`,
         }
     });
 }
+
 pkgJson.normalize()
 pkgJson.save();
