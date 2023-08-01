@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { input, confirm } from '@inquirer/prompts';
+import { input, confirm, checkbox } from '@inquirer/prompts';
 import fs from 'fs';
 import PackageJson from '@npmcli/package-json';
 import path from 'path';
@@ -7,12 +7,23 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-console.log(__dirname);
 
 const addonName = await input({ message: 'Enter the Addon name' });
+
 const initExample = await confirm({
     message: 'Do you want to init with example?',
 });
+
+const initFolders = await checkbox({
+    message: 'Do you want to init with folders?',
+    choices: [
+        // header, folder, orderFinale
+        { name: 'header', value: 'header' },
+        { name: 'folder', value: 'folder' },
+        { name: 'orderFinale', value: 'orderFinale' },
+    ],
+});
+
 const initBender = await confirm({
     message: 'Do you want to init with Shoptet Bender?',
 });
@@ -24,12 +35,26 @@ if (initBender) {
 }
 
 try {
-    if (initExample) {
-        fs.cpSync(__dirname+'/template', `./${addonName}`, { recursive: true });
-    } else {
-        fs.mkdirSync(`./${addonName}`);
+    fs.mkdirSync(`./${addonName}`);
+    fs.mkdirSync(`./${addonName}/src`);
+    if (initFolders) {
+        initFolders.forEach((folder) => {
+            fs.mkdirSync(`./${addonName}/src/${folder}`);
+        });
     }
+    if (initExample) {
+        fs.mkdirSync(`./${addonName}/dist`);
+        fs.cpSync(`${__dirname}/.gitignore`, `./${addonName}/.gitignore`);
+        fs.cpSync(`${__dirname}/template`, `./${addonName}`, {
+            recursive: true,
+        });
+    }
+    fs.cpSync(
+        `${__dirname}/template/package.json`,
+        `./${addonName}/package.json`
+    );
 } catch (err) {
+    console.error(err);
     if (err.code !== 'EEXIST') throw err;
 }
 
@@ -39,7 +64,8 @@ pkgJson.update({
     name: addonName,
     devDependencies: {
         ...pkgJson.content.devDependencies,
-        'shp-bender': 'git+https://github.com/shoptet/shoptet-bender.git@addon-boilerplate',
+        'shp-bender':
+            'git+https://github.com/shoptet/shoptet-bender.git#addon-boilerplate',
     },
 });
 
@@ -47,10 +73,10 @@ if (remoteEshopUrl) {
     pkgJson.update({
         scripts: {
             ...pkgJson.content.scripts,
-            'dev': `shp-bender --remote ${remoteEshopUrl}`,
-        }
+            dev: `shp-bender --remote ${remoteEshopUrl}`,
+        },
     });
 }
 
-pkgJson.normalize()
+pkgJson.normalize();
 pkgJson.save();

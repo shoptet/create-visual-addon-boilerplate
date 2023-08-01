@@ -9,6 +9,9 @@
     "minifyOrderFinale": "minify src/orderFinale/*.js > dist/scripts.orderFinale.min.js && minify src/orderFinale/*.css > dist/styles.orderFinale.min.css"
   },
   "devDependencies": {
-    "minify": "^10.3.0"
-  }
+    "minify": "^10.3.0",
+    "shp-bender": "git+https://github.com/shoptet/shoptet-bender.git#addon-boilerplate"
+  },
+  "name": "test",
+  "_id": "test@1.0.0"
 }
