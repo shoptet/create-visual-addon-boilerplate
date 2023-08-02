@@ -8,20 +8,34 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const addonName = await input({ message: 'Enter the Addon name' });
-
-const initExample = await confirm({
-    message: 'Do you want to init with example?',
+//read until the validation for folder creation is ok
+const addonName = await input({
+    message: 'Enter the Addon name',
+    validate: (input) => {
+        if (!input) {
+            return 'Please enter a name';
+        }
+        if (input.match(/[^a-z0-9_-]/i)) {
+            return 'Only letters, numbers, underscores, and hyphens are allowed';
+        }
+        if (fs.existsSync(`./${input}`)) {
+            return 'Folder already exists';
+        }
+        return true;
+    },
 });
 
 const initFolders = await checkbox({
     message: 'Do you want to init with folders?',
     choices: [
-        // header, folder, orderFinale
         { name: 'header', value: 'header' },
         { name: 'footer', value: 'footer' },
         { name: 'orderFinale', value: 'orderFinale' },
     ],
+});
+
+const initExample = await confirm({
+    message: 'Do you want to init with header include example?',
 });
 
 const initBender = await confirm({
@@ -31,6 +45,17 @@ let remoteEshopUrl = null;
 if (initBender) {
     remoteEshopUrl = await input({
         message: 'Enter the eshop url',
+        validate: (input) => {
+            try {
+                const url = new URL(input);
+                if (url.protocol !== 'https:') {
+                    return 'Please enter a URL starting with https (e. g. https://classic.shoptet.cz)';
+                }
+                return true;
+            } catch (err) {
+                return 'Not a valid URL format (https://shoptet.cz)';
+            }
+        },
     });
 }
 
