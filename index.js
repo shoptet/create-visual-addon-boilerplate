@@ -19,7 +19,7 @@ const initFolders = await checkbox({
     choices: [
         // header, folder, orderFinale
         { name: 'header', value: 'header' },
-        { name: 'folder', value: 'folder' },
+        { name: 'footer', value: 'footer' },
         { name: 'orderFinale', value: 'orderFinale' },
     ],
 });
