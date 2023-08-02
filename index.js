@@ -8,7 +8,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-//read until the validation for folder creation is ok
 const addonName = await input({
     message: 'Enter the Addon name',
     validate: (input) => {
@@ -69,7 +68,6 @@ try {
     }
     if (initExample) {
         fs.mkdirSync(`./${addonName}/dist`);
-        fs.cpSync(`${__dirname}/.gitignore`, `./${addonName}/.gitignore`);
         fs.cpSync(`${__dirname}/template`, `./${addonName}`, {
             recursive: true,
         });
