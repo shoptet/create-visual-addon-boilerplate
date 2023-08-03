@@ -82,28 +82,20 @@ try {
             recursive: true,
         });
     }
+
     fs.cpSync(
         `${__dirname}/template/package.json`,
         `./${addonName}/package.json`
     );
-    if (fs.existsSync(`${__dirname}/template/yarn.lock`)) {
-        fs.cpSync(
-            `${__dirname}/template/yarn.lock`,
-            `./${addonName}/yarn.lock`
-        );
-    }
-    if (fs.existsSync(`${__dirname}/template/config.json`)) {
-        fs.cpSync(
-            `${__dirname}/template/config.json`,
-            `./${addonName}/config.json`
-        );
-    }
-    if (fs.existsSync(`${__dirname}/template/.gitignore`)) {
-        fs.cpSync(
-            `${__dirname}/template/.gitignore`,
-            `./${addonName}/.gitignore`
-        );
-    }
+
+    fs.cpSync(
+        `${__dirname}/template/config.json`,
+        `./${addonName}/config.json`
+    );
+
+    fs.writeFileSync(`./${addonName}/yarn.lock`, '');
+
+    fs.cpSync(`${__dirname}/template/.gitignore`, `./${addonName}/.gitignore`);
 } catch (err) {
     console.error(err);
     if (err.code !== 'EEXIST') throw err;
@@ -120,7 +112,6 @@ pkgJson.update({
             'git+https://github.com/shoptet/shoptet-bender.git#addon-boilerplate',
     },
 });
-
 
 if (remoteEshopUrl) {
     const configPath = `${addonPath}/config.json`;
