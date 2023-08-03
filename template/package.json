@@ -3,8 +3,6 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-  },
-  "devDependencies": {
-    "minify": "^10.3.0"
+    "dev": "shp-bender"
   }
 }
