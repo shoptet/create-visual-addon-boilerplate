@@ -76,6 +76,12 @@ try {
         `${__dirname}/template/package.json`,
         `./${addonName}/package.json`
     );
+    if (fs.existsSync(`${__dirname}/template/.gitignore`)) {
+        fs.cpSync(
+            `${__dirname}/template/.gitignore`,
+            `./${addonName}/.gitignore`
+        );
+    }
 } catch (err) {
     console.error(err);
     if (err.code !== 'EEXIST') throw err;
