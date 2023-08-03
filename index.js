@@ -24,6 +24,16 @@ const addonName = await input({
     },
 });
 
+const addonDescription = await input({
+    message: 'Enter the Addon description',
+    validate: (input) => {
+        if (!input) {
+            return 'Please enter a description';
+        }
+        return true;
+    },
+});
+
 const initFolders = await checkbox({
     message: 'Do you want to init with folders?',
     choices: [
@@ -76,6 +86,13 @@ try {
         `${__dirname}/template/package.json`,
         `./${addonName}/package.json`
     );
+    // copy cofig.json
+    if (fs.existsSync(`${__dirname}/template/config.json`)) {
+        fs.cpSync(
+            `${__dirname}/template/config.json`,
+            `./${addonName}/config.json`
+        );
+    }
     if (fs.existsSync(`${__dirname}/template/.gitignore`)) {
         fs.cpSync(
             `${__dirname}/template/.gitignore`,
@@ -91,6 +108,7 @@ const addonPath = `./${addonName}/`;
 const pkgJson = await PackageJson.load(addonPath);
 pkgJson.update({
     name: addonName,
+    description: addonDescription,
     devDependencies: {
         ...pkgJson.content.devDependencies,
         'shp-bender':
@@ -98,13 +116,12 @@ pkgJson.update({
     },
 });
 
+
 if (remoteEshopUrl) {
-    pkgJson.update({
-        scripts: {
-            ...pkgJson.content.scripts,
-            dev: `shp-bender --remote ${remoteEshopUrl}`,
-        },
-    });
+    const configPath = `${addonPath}/config.json`;
+    const config = JSON.parse(fs.readFileSync(configPath));
+    config.defaultUrl = remoteEshopUrl;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
 
 pkgJson.normalize();
