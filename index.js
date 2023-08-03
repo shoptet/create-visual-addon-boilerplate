@@ -95,7 +95,13 @@ try {
 
     fs.writeFileSync(`./${addonName}/yarn.lock`, '');
 
-    fs.cpSync(`${__dirname}/template/.gitignore`, `./${addonName}/.gitignore`);
+    fs.writeFileSync(
+        `./${addonName}/.gitignore`,
+        `node_modules/
+        dist/
+        yarn.lock`
+    );
+
 } catch (err) {
     console.error(err);
     if (err.code !== 'EEXIST') throw err;
