@@ -86,7 +86,12 @@ try {
         `${__dirname}/template/package.json`,
         `./${addonName}/package.json`
     );
-    // copy cofig.json
+    if (fs.existsSync(`${__dirname}/template/yarn.lock`)) {
+        fs.cpSync(
+            `${__dirname}/template/yarn.lock`,
+            `./${addonName}/yarn.lock`
+        );
+    }
     if (fs.existsSync(`${__dirname}/template/config.json`)) {
         fs.cpSync(
             `${__dirname}/template/config.json`,
