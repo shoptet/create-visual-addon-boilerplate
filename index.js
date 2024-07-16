@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/** @format */
 
 import { input, confirm, checkbox } from '@inquirer/prompts';
 import fs from 'fs';
@@ -110,14 +109,12 @@ const addonPath = `./${addonName}/`;
 const pkgJson = await PackageJson.load(addonPath);
 
 const webpackDep = {
-  'webpack-cli': '^5.1.4',
+  '@babel/core': '^7.24.1',
+  '@babel/preset-env': '^7.24.1',
   'babel-loader': '^9.1.3',
   'css-loader': '^6.10.0',
   'css-minimizer-webpack-plugin': '^6.0.0',
-  'extract-loader': '^5.1.0',
-  'file-loader': '^6.2.0',
   glob: '^10.3.10',
-  'html-loader': '^5.0.0',
   'javascript-obfuscator': '^4.1.0',
   less: '^4.2.0',
   'less-loader': '^12.2.0',
@@ -127,6 +124,7 @@ const webpackDep = {
   'sass-loader': '^14.1.0',
   'style-loader': '^3.3.4',
   webpack: '^5.90.1',
+  'webpack-cli': '^5.1.4',
   'webpack-obfuscator': '^3.5.1',
   'webpack-remove-empty-scripts': '^1.0.4',
 };
