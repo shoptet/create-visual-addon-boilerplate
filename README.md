@@ -1,21 +1,21 @@
-# Start customizing your e-shop with Shoptet Addon Primer 
+# Start customizing your e-shop with Shoptet Primer
 
 ## Introduction
 
 This repository contains the source code for a tool that helps you to create visual addons, templates or just for development of your e-shop customization.
 
 ## Prerequisites
-Before you can use Shoptet Addon Primer, you must have the following software installed on your system:
+Before you can use Shoptet Primer, you must have the following software installed on your system:
 
 Node.js
 You can download Node.js and npm from the official Node.js website: https://nodejs.org/
 
-Once you have installed Node.js and npm, you can use Shoptet Addon Primer to create a new Visual Addon project.
+Once you have installed Node.js and npm, you can use Shoptet Primer to create a new Visual Addon project.
 
 ## Usage
-To create a new Visual Addon project, simply run the following command:
+To start customizing, simply run the following command:
 ```
-npx shoptet/addon-primer
+npx shoptet/shoptet-primer
 ```
 
 This will launch a wizard that will guide you through the process of creating a new project. Once the wizard is complete, you will have a fully functional Visual Addon project that you can customize to your needs.
