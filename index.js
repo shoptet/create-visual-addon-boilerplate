@@ -96,6 +96,8 @@ try {
 
   fs.cpSync(`${__dirname}/template/config.json`, `./${addonName}/config.json`);
 
+  fs.cpSync(`${__dirname}/template/.gitignore`, `./${addonName}/.gitignore`);
+
   initBuildTool && fs.cpSync(`${__dirname}/template/webpack.config.js`, `./${addonName}/webpack.config.js`);
 
   fs.writeFileSync(`./${addonName}/yarn.lock`, '');
