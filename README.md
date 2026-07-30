@@ -8,7 +8,7 @@ This repository contains a CLI wizard that scaffolds a Shoptet Visual Addon proj
 
 Before you can use create-visual-addon-boilerplate, you must have the following software installed on your system:
 
-- **Node.js 24.15 or higher** — you can download it from the official Node.js website: https://nodejs.org/
+- **Node.js 24.15+ (or 26+)** — you can download it from the official Node.js website: https://nodejs.org/
 - **A package manager of your choice** — npm (bundled with Node.js), Yarn, or pnpm are all supported by the Addon Repository build pipeline.
 
 ## Usage
@@ -48,7 +48,7 @@ my-addon/
 │  └─ orderFinale/  # deployed to the "order finale" field
 ├─ assets/          # optional static files (fonts, images), deployed as-is
 ├─ config.json      # Shoptet Bender configuration (created when you choose Bender)
-├─ webpack.config.js
+├─ webpack.config.js # created when you choose the build process
 └─ package.json
 ```
 
@@ -72,6 +72,8 @@ If you chose the build process, two scripts are available:
 - `npm run build:dev` — development build of the same bundles without minification and obfuscation.
 
 HTML files placed in the `src` folders are concatenated in alphabetical order into `dist/markups.<folder>.html` and deployed to the corresponding markup field. The `assets/` folder is copied to `dist/assets/` as-is.
+
+Note that your code is bundled exactly as written — there is no transpilation or polyfilling, so mind the browser support of the JavaScript and CSS features you use.
 
 The Addon Repository deploy workflow runs the `build` script with `--env production` using your detected package manager and uploads the contents of `dist/`, so a local production build gives you exactly what will be deployed.
 

@@ -7,8 +7,14 @@ on:
 
 jobs:
   smoke:
-    name: Wizard smoke test
+    name: Wizard smoke test (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # the declared minimum and the latest release of the current LTS line
+        node: ['24.15.0', '24']
     steps:
       - name: Get latest code
         uses: actions/checkout@v6
@@ -16,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: ${{ matrix.node }}
           cache: 'yarn'
 
       - name: Install dependencies

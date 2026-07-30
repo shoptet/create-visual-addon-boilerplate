@@ -84,4 +84,13 @@ feed 'less-addon\n' 'Less addon\n' 'a' '\n' 'y\n' 'y\n' 'https://classic.shoptet
 [[ "$(pkg less-addon "devDependencies['less-loader']")" != 'undefined' ]] || fail 'less-loader should be installed'
 [[ "$(pkg less-addon "devDependencies['sass']")" == 'undefined' ]] || fail 'sass should not be installed'
 
+echo '=== scenario: CSS flavour (scaffold only) ==='
+feed 'css-addon\n' 'Css addon\n' 'a' '\n' 'y\n' 'n\n' 'y\n' '\n' \
+  | node "$REPO_DIR/index.js" > css.log 2>&1 || { cat css.log; fail 'wizard exited non-zero'; }
+
+[[ -f css-addon/src/header/style.css ]] || fail 'missing style.css example'
+[[ "$(pkg css-addon "devDependencies['sass']")" == 'undefined' ]] || fail 'sass should not be installed'
+[[ "$(pkg css-addon "devDependencies['less']")" == 'undefined' ]] || fail 'less should not be installed'
+[[ "$(pkg css-addon "engines.node")" == '">=22.11.0"' ]] || fail 'generated project should declare engines'
+
 echo 'OK: all smoke tests passed'

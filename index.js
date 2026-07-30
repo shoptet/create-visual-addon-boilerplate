@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
-import { input, confirm, checkbox, select } from '@inquirer/prompts';
 import fs from 'fs';
-import PackageJson from '@npmcli/package-json';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -17,11 +15,16 @@ process.on('uncaughtException', error => {
   throw error;
 });
 
+// Mirrors the engines field; checked before the heavy dependencies load so
+// unsupported Node versions get a readable error instead of a syntax error
 const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
-if (nodeMajor < 24 || (nodeMajor === 24 && nodeMinor < 15)) {
-  console.error(`This tool requires Node.js >=24.15.0, you are running ${process.version}.`);
+if (!(nodeMajor >= 26 || (nodeMajor === 24 && nodeMinor >= 15))) {
+  console.error(`This tool requires Node.js ^24.15.0 || >=26.0.0, you are running ${process.version}.`);
   process.exit(1);
 }
+
+const { input, confirm, checkbox, select } = await import('@inquirer/prompts');
+const { default: PackageJson } = await import('@npmcli/package-json');
 
 const addonName = await input({
   message: 'Enter the Addon name',
@@ -176,7 +179,7 @@ await pkgJson.save();
 
 console.log(`\nDone! Next steps:`);
 console.log(`  cd ${addonName}`);
-console.log(`  npm install`);
+console.log(`  npm install (or your preferred package manager)`);
 if (initBender) {
   console.log(`  npm run dev`);
 }

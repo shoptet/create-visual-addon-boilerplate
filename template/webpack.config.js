@@ -67,6 +67,9 @@ export default env => {
   return {
     mode: isProduction ? 'production' : 'development',
     devtool: isProduction ? false : 'eval',
+    // Floor for webpack-generated runtime code. Source files are bundled as
+    // written — there is no transpilation, mind your browser support.
+    target: ['web', 'es2017'],
     entry: {
       ...getEntries('js', isProduction),
       ...getEntries('{scss,less,css}', isProduction),
@@ -87,15 +90,18 @@ export default env => {
       optimization: {
         minimize: true,
         minimizer: [
-          new WebpackObfuscatorPlugin({
-            stringArrayRotate: true,
-          }),
+          // '...' keeps webpack's default TerserPlugin — without it the JS
+          // would be obfuscated but never minified
+          '...',
+          new WebpackObfuscatorPlugin(),
           new CssMinimizerPlugin(),
         ],
       },
     }),
     module: {
       rules: [
+        // The less/scss rules only work when the corresponding preprocessor is
+        // installed (less + less-loader, or sass + sass-loader)
         {
           test: /\.less$/i,
           use: [MiniCssExtractPlugin.loader, 'css-loader', 'less-loader'],
