@@ -1,9 +1,6 @@
 {
+  "private": true,
   "version": "1.0.0",
-  "main": "index.js",
   "type": "module",
-  "license": "UNLICENSED",
-  "scripts": {
-    "dev": "shp-bender"
-  }
+  "license": "UNLICENSED"
 }

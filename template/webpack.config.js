@@ -1,7 +1,9 @@
 /** @format */
 
+import fs from 'fs';
 import path from 'path';
-import { glob } from 'glob';
+import { globSync } from 'glob';
+import CopyPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import WebpackObfuscatorPlugin from 'webpack-obfuscator';
@@ -9,19 +11,20 @@ import RemoveEmptyScriptsPlugin from 'webpack-remove-empty-scripts';
 
 const outputDir = path.resolve(process.cwd(), 'dist');
 
+// The three folders correspond to the code fields in the Shoptet administration
+const folders = ['header', 'footer', 'orderFinale'];
+
 const extensionsFilenames = {
   js: 'scripts',
   scss: 'styles',
   less: 'styles',
   css: 'styles',
-  html: 'markup',
 };
 
 const getEntries = (extension, isProduction) => {
   const entries = {};
-  const folders = ['footer', 'header', 'index'];
   folders.forEach(folder => {
-    const files = glob.sync(`./src/${folder}/**/*.${extension}`);
+    const files = globSync(`./src/${folder}/**/*.${extension}`).sort();
     if (files.length > 0) {
       const foundExtension = files[0].split('.').pop();
       const filename = extensionsFilenames[foundExtension];
@@ -32,14 +35,32 @@ const getEntries = (extension, isProduction) => {
   return entries;
 };
 
-const getGlobalAssetsEntry = () => {
-  const entries = {};
-  const files = glob.sync('./assets/**/*');
-  if (files.length > 0) {
-    entries['assets'] = files.map(str => './' + str);
+// The Addon Repository deployment reads markup as `markups.<folder>.html`
+// (no `.min` suffix), concatenated from all HTML files in the folder in
+// alphabetical order.
+class MarkupPlugin {
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap('MarkupPlugin', compilation => {
+      compilation.hooks.processAssets.tap(
+        { name: 'MarkupPlugin', stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL },
+        () => {
+          folders.forEach(folder => {
+            const folderPath = path.resolve('src', folder);
+            if (fs.existsSync(folderPath)) {
+              compilation.contextDependencies.add(folderPath);
+            }
+            const files = globSync(`./src/${folder}/**/*.html`).sort();
+            if (files.length > 0) {
+              files.forEach(file => compilation.fileDependencies.add(path.resolve(file)));
+              const markup = files.map(file => fs.readFileSync(file, 'utf8')).join('\n');
+              compilation.emitAsset(`markups.${folder}.html`, new compiler.webpack.sources.RawSource(markup));
+            }
+          });
+        }
+      );
+    });
   }
-  return entries;
-};
+}
 
 export default env => {
   const isProduction = env.production === true;
@@ -48,24 +69,26 @@ export default env => {
     devtool: isProduction ? false : 'eval',
     entry: {
       ...getEntries('js', isProduction),
-      ...getEntries('{scss,less}', isProduction),
-      ...getEntries('css', isProduction),
-      // TODO: add html entries
-      // TODO: add copy assets entries
+      ...getEntries('{scss,less,css}', isProduction),
       // TODO: add TS entries
-      ...getGlobalAssetsEntry(),
     },
     output: {
       path: outputDir,
       clean: true,
     },
-    plugins: [new MiniCssExtractPlugin(), new RemoveEmptyScriptsPlugin()],
+    plugins: [
+      new MiniCssExtractPlugin(),
+      new RemoveEmptyScriptsPlugin(),
+      new MarkupPlugin(),
+      // The assets folder is deployed to the remote assets folder as-is
+      new CopyPlugin({ patterns: [{ from: 'assets', to: 'assets', noErrorOnMissing: true }] }),
+    ],
     ...(isProduction && {
       optimization: {
         minimize: true,
         minimizer: [
           new WebpackObfuscatorPlugin({
-            rotateStringArray: true,
+            stringArrayRotate: true,
           }),
           new CssMinimizerPlugin(),
         ],
@@ -74,20 +97,12 @@ export default env => {
     module: {
       rules: [
         {
-          test: /\.js$/,
-          use: ['babel-loader'],
-        },
-        {
           test: /\.less$/i,
           use: [MiniCssExtractPlugin.loader, 'css-loader', 'less-loader'],
         },
         {
           test: /\.scss$/i,
-          use: [
-            MiniCssExtractPlugin.loader,
-            'css-loader',
-            { loader: 'sass-loader', options: { sassOptions: { outputStyle: 'expanded' } } },
-          ],
+          use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
         },
         {
           test: /\.css$/,
