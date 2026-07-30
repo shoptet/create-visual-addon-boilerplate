@@ -147,6 +147,7 @@ const webpackDep = {
   glob: '^13.0.6',
   'javascript-obfuscator': '^5.5.0',
   'mini-css-extract-plugin': '^2.10.2',
+  'terser-webpack-plugin': '^5.6.1',
   webpack: '^5.109.2',
   'webpack-cli': '^7.2.2',
   'webpack-obfuscator': '^3.6.1',
@@ -179,13 +180,14 @@ await pkgJson.save();
 
 console.log(`\nDone! Next steps:`);
 console.log(`  cd ${addonName}`);
-console.log(`  npm install (or your preferred package manager)`);
+console.log(`  npm install`);
 if (initBender) {
   console.log(`  npm run dev`);
 }
 if (initBuildTool) {
   console.log(`  npm run build`);
 }
+console.log(`\nThe examples use npm, but any package manager works — remember to commit its lockfile.`);
 if (initExample && !initBuildTool && styleFormat !== 'css') {
   console.log(
     `\nNote: you chose ${styleFormat.toUpperCase()} example files without the build process — you will need your own tooling to compile them.`

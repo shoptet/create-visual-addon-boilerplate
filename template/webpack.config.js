@@ -6,6 +6,7 @@ import { globSync } from 'glob';
 import CopyPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
 import WebpackObfuscatorPlugin from 'webpack-obfuscator';
 import RemoveEmptyScriptsPlugin from 'webpack-remove-empty-scripts';
 
@@ -90,9 +91,11 @@ export default env => {
       optimization: {
         minimize: true,
         minimizer: [
-          // '...' keeps webpack's default TerserPlugin — without it the JS
-          // would be obfuscated but never minified
-          '...',
+          // Explicit TerserPlugin: a custom minimizer array would otherwise drop
+          // webpack's default JS minification. extractComments: false keeps
+          // license banners inline instead of emitting extra *.LICENSE.txt
+          // files into dist/, which is deployed as a whole.
+          new TerserPlugin({ extractComments: false }),
           new WebpackObfuscatorPlugin(),
           new CssMinimizerPlugin(),
         ],
