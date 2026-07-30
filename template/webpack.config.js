@@ -92,9 +92,9 @@ export default env => {
         minimize: true,
         minimizer: [
           // Explicit TerserPlugin: a custom minimizer array would otherwise drop
-          // webpack's default JS minification. extractComments: false keeps
-          // license banners inline instead of emitting extra *.LICENSE.txt
-          // files into dist/, which is deployed as a whole.
+          // webpack's default JS minification. extractComments: false avoids
+          // emitting *.LICENSE.txt files into dist/, which is deployed as a
+          // whole (the obfuscator drops comments anyway).
           new TerserPlugin({ extractComments: false }),
           new WebpackObfuscatorPlugin(),
           new CssMinimizerPlugin(),

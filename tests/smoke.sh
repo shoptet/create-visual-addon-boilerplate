@@ -38,6 +38,7 @@ done
 [[ "$(pkg full-addon "scripts.build")" == '"webpack --env production"' ]] || fail 'wrong build script'
 [[ "$(pkg full-addon "scripts['build:dev']")" == '"webpack"' ]] || fail 'wrong build:dev script'
 [[ "$(pkg full-addon "devDependencies['sass-loader']")" != 'undefined' ]] || fail 'sass-loader should be installed'
+[[ "$(pkg full-addon "devDependencies['terser-webpack-plugin']")" != 'undefined' ]] || fail 'terser-webpack-plugin should be installed'
 [[ "$(pkg full-addon "devDependencies['less']")" == 'undefined' ]] || fail 'less should not be installed'
 [[ "$(pkg full-addon "private")" == 'true' ]] || fail 'generated project should be private'
 [[ "$(pkg full-addon "_id")" == 'undefined' ]] || fail '_id leaked into package.json'
@@ -47,6 +48,7 @@ echo '=== production and development builds ==='
   cd full-addon
   printf '<div>AAA markup</div>' > src/header/a-markup.html
   printf '<div>BBB markup</div>' > src/header/b-markup.html
+  printf '/*! test-banner v1.0 | MIT */\nconsole.log("footer with banner");\n' > src/footer/script.js
   mkdir -p assets
   printf '<svg></svg>' > assets/logo.svg
   npm install --no-audit --no-fund --loglevel=error
@@ -57,6 +59,7 @@ echo '=== production and development builds ==='
     [[ -f "dist/$f" ]] || fail "production build: missing dist/$f"
   done
   grep -q '_0x' dist/scripts.header.min.js || fail 'production JS does not look obfuscated'
+  [[ -z "$(find dist -name '*.LICENSE.txt' -print -quit)" ]] || fail 'license comments should not be extracted into dist'
   [[ "$(cat dist/markups.header.html)" == '<div>AAA markup</div>
 <div>BBB markup</div>' ]] || fail 'markup is not concatenated in alphabetical order'
   npm run build:dev
