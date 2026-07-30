@@ -5,10 +5,20 @@ about: If something isn't working as expected 🤔.
 
 # Bug report
 
-<!-- Before reporting an issue please check that you are using the latest Shoptet Bender version! -->
+<!-- Before reporting an issue please make sure you are running the latest version of the wizard — npx may serve a cached copy, you can clear it with `npx clear-npx-cache`. Also check that your Node.js version meets the minimum stated in the README. -->
 
 <!-- Please describe your problem here. -->
 
+### Steps to reproduce
+
+<!-- Which answers did you choose in the wizard? (folders, example files, Shoptet Bender, build process, stylesheet format) -->
+
 ### Expected output
 
-<!-- Describe what the behavior is expected. -->
+<!-- Describe what behavior is expected. -->
+
+### Environment
+
+- Node.js version (`node -v`):
+- Package manager and version:
+- Operating system:
