@@ -48,16 +48,21 @@ echo '=== production and development builds ==='
   cd full-addon
   printf '<div>AAA markup</div>' > src/header/a-markup.html
   printf '<div>BBB markup</div>' > src/header/b-markup.html
+  printf '<div>footer markup</div>' > src/footer/markup.html
   printf '/*! test-banner v1.0 | MIT */\nconsole.log("footer with banner");\n' > src/footer/script.js
+  printf '.scss-marker { color: red; }' > src/header/style.scss
+  printf '.css-marker { color: green; }' > src/header/extra.css
   mkdir -p assets
   printf '<svg></svg>' > assets/logo.svg
   npm install --no-audit --no-fund --loglevel=error
   npm run build
   for f in scripts.header.min.js scripts.footer.min.js scripts.orderFinale.min.js \
            styles.header.min.css styles.footer.min.css styles.orderFinale.min.css \
-           markups.header.html assets/logo.svg; do
+           markups.header.html markups.footer.html assets/logo.svg; do
     [[ -f "dist/$f" ]] || fail "production build: missing dist/$f"
   done
+  grep -q 'scss-marker' dist/styles.header.min.css || fail 'preprocessor styles missing from merged entry'
+  grep -q 'css-marker' dist/styles.header.min.css || fail 'entry-key collision fix regressed (plain CSS is missing next to the preprocessor styles)'
   grep -q '_0x' dist/scripts.header.min.js || fail 'production JS does not look obfuscated'
   [[ -z "$(find dist -name '*.LICENSE.txt' -print -quit)" ]] || fail 'license comments should not be extracted into dist'
   [[ "$(cat dist/markups.header.html)" == '<div>AAA markup</div>

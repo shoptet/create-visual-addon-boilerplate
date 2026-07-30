@@ -15,8 +15,10 @@ process.on('uncaughtException', error => {
   throw error;
 });
 
-// Mirrors the engines field; checked before the heavy dependencies load so
-// unsupported Node versions get a readable error instead of a syntax error
+// Mirrors the engines field. Checked before the heavy dependencies are
+// imported, so realistically old Node versions (18-22 — anything that can
+// parse top-level await) get a readable error instead of a dependency syntax
+// error; a non-numeric prerelease version fails the check too.
 const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
 if (!(nodeMajor >= 26 || (nodeMajor === 24 && nodeMinor >= 15))) {
   console.error(`This tool requires Node.js ^24.15.0 || >=26.0.0, you are running ${process.version}.`);
@@ -32,8 +34,8 @@ const addonName = await input({
     if (!input) {
       return 'Please enter a name';
     }
-    if (input.match(/[^a-z0-9_-]/)) {
-      return 'Only lowercase letters, numbers, underscores, and hyphens are allowed';
+    if (!input.match(/^[a-z0-9][a-z0-9_-]*$/)) {
+      return 'Use lowercase letters, numbers, underscores and hyphens, starting with a letter or a number';
     }
     if (fs.existsSync(`./${input}`)) {
       return 'Folder already exists';
@@ -138,7 +140,6 @@ try {
 }
 
 const addonPath = `./${addonName}/`;
-const pkgJson = await PackageJson.load(addonPath);
 
 const webpackDep = {
   'copy-webpack-plugin': '^14.0.0',
@@ -162,21 +163,28 @@ const benderDep = {
   'shp-bender': 'git+https://github.com/shoptet/shoptet-bender.git',
 };
 
-pkgJson.update({
-  name: addonName,
-  description: addonDescription,
-  scripts: {
-    ...(initBuildTool && { build: 'webpack --env production', 'build:dev': 'webpack' }),
-    ...(initBender && { dev: `shp-bender --remote ${remoteEshopUrl}` }),
-  },
-  devDependencies: {
-    ...pkgJson.content.devDependencies,
-    ...(initBuildTool && webpackDep),
-    ...(initBuildTool && styleDep[styleFormat]),
-    ...(initBender && benderDep),
-  },
-});
-await pkgJson.save();
+try {
+  const pkgJson = await PackageJson.load(addonPath);
+  pkgJson.update({
+    name: addonName,
+    description: addonDescription,
+    scripts: {
+      ...(initBuildTool && { build: 'webpack --env production', 'build:dev': 'webpack' }),
+      ...(initBender && { dev: `shp-bender --remote ${remoteEshopUrl}` }),
+    },
+    devDependencies: {
+      ...pkgJson.content.devDependencies,
+      ...(initBuildTool && webpackDep),
+      ...(initBuildTool && styleDep[styleFormat]),
+      ...(initBender && benderDep),
+    },
+  });
+  await pkgJson.save();
+} catch (err) {
+  console.error('Failed to update the generated package.json:', err);
+  console.error(`The partially created ${addonPath} folder was left on disk.`);
+  process.exit(1);
+}
 
 console.log(`\nDone! Next steps:`);
 console.log(`  cd ${addonName}`);

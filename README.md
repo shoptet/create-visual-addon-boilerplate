@@ -8,7 +8,7 @@ This repository contains a CLI wizard that scaffolds a Shoptet Visual Addon proj
 
 Before you can use create-visual-addon-boilerplate, you must have the following software installed on your system:
 
-- **Node.js 24.15+ (or 26+)** — you can download it from the official Node.js website: https://nodejs.org/
+- **Node.js 24.15+ or 26+** (Node 25 is not supported) — you can download it from the official Node.js website: https://nodejs.org/
 - **A package manager of your choice** — npm (bundled with Node.js), Yarn, or pnpm are all supported by the Addon Repository build pipeline.
 
 ## Usage

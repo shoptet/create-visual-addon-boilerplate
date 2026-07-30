@@ -64,7 +64,9 @@ class MarkupPlugin {
 }
 
 export default env => {
-  const isProduction = env.production === true;
+  // webpack-cli passes `--env production` as boolean true, but
+  // `--env production=true` arrives as the string 'true'
+  const isProduction = env.production === true || env.production === 'true';
   return {
     mode: isProduction ? 'production' : 'development',
     devtool: isProduction ? false : 'eval',

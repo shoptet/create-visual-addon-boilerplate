@@ -11,7 +11,8 @@
   },
   "files": [
     "index.js",
-    "template"
+    "template",
+    "tests"
   ],
   "scripts": {
     "test": "bash tests/smoke.sh"
