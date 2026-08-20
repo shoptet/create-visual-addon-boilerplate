@@ -15,13 +15,15 @@ process.on('uncaughtException', error => {
   throw error;
 });
 
-// Mirrors the engines field. Checked before the heavy dependencies are
-// imported, so realistically old Node versions (18-22 — anything that can
-// parse top-level await) get a readable error instead of a dependency syntax
-// error; a non-numeric prerelease version fails the check too.
+// Keep the expression in sync with `engines.node` in package.json — the range
+// shown in the error message is read from there. Checked before the heavy
+// dependencies are imported, so realistically old Node versions (18-22 —
+// anything that can parse top-level await) get a readable error instead of a
+// dependency syntax error; a non-numeric prerelease version fails the check too.
+const { engines } = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
 if (!(nodeMajor >= 26 || (nodeMajor === 24 && nodeMinor >= 15))) {
-  console.error(`This tool requires Node.js ^24.15.0 || >=26.0.0, you are running ${process.version}.`);
+  console.error(`This tool requires Node.js ${engines.node}, you are running ${process.version}.`);
   process.exit(1);
 }
 
@@ -56,6 +58,8 @@ const addonDescription = await input({
 
 const initFolders = await checkbox({
   message: 'Do you want to init with folders?',
+  // Keep in sync with `folders` in template/webpack.config.js (and the README
+  // project-structure diagram + tests/smoke.sh)
   choices: [
     { name: 'header', value: 'header' },
     { name: 'footer', value: 'footer' },
@@ -123,10 +127,9 @@ try {
 
   fs.copyFileSync(`${__dirname}/template/package.json`, `./${addonName}/package.json`);
 
-  if (initBender) {
-    // config.json is read by Shoptet Bender from the project root
-    fs.copyFileSync(`${__dirname}/template/config.json`, `./${addonName}/config.json`);
-  }
+  // config.json is read by Shoptet Bender (unconditionally, at import time) —
+  // copied always so that adding Bender to the project later just works
+  fs.copyFileSync(`${__dirname}/template/config.json`, `./${addonName}/config.json`);
 
   if (initBuildTool) {
     fs.copyFileSync(`${__dirname}/template/webpack.config.js`, `./${addonName}/webpack.config.js`);

@@ -33,6 +33,16 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
 
+      # The dominant cost is the smoke test's inner `npm install` of the
+      # generated webpack toolchain — cache the npm download cache for it
+      - name: Cache npm downloads
+        uses: actions/cache@v6
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-node${{ matrix.node }}-${{ hashFiles('index.js') }}
+          restore-keys: |
+            npm-${{ runner.os }}-node${{ matrix.node }}-
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 

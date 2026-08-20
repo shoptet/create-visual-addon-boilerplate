@@ -8,40 +8,60 @@ WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 cd "$WORKDIR"
 
-# Prints each argument after a short delay so every prompt is rendered
-# before its answer arrives.
-feed() {
-  for chunk in "$@"; do
-    sleep 1
-    printf '%b' "$chunk"
-  done
-  sleep 2
-}
-
 fail() { echo "FAIL: $*" >&2; exit 1; }
 pkg() { node -p "JSON.stringify(require('./$1/package.json').$2)"; }
+assert_dep() { [[ "$(pkg "$1" "devDependencies['$2']")" != 'undefined' ]] || fail "$1: $2 should be installed"; }
+assert_no_dep() { [[ "$(pkg "$1" "devDependencies['$2']")" == 'undefined' ]] || fail "$1: $2 should not be installed"; }
+
+# Sends each chunk once the wizard's output has gone idle (the active prompt
+# is rendered and waiting for input) instead of relying on fixed sleeps.
+feed() {
+  local logfile="$1"
+  shift
+  for chunk in "$@"; do
+    local prev=-1 size=0 tries=0
+    while :; do
+      size=$(wc -c < "$logfile" 2>/dev/null || echo 0)
+      [[ "$size" -gt 0 && "$size" -eq "$prev" ]] && break
+      prev=$size
+      [[ $((++tries)) -gt 300 ]] && break # 30s safety net per chunk
+      sleep 0.1
+    done
+    printf '%b' "$chunk"
+  done
+  sleep 2 # keep stdin open while the wizard writes the project
+}
+
+# scaffold <name> <answer chunks...> — runs the wizard, log in $WORKDIR/<name>.log
+scaffold() {
+  local name="$1"
+  shift
+  : > "$name.log"
+  feed "$name.log" "$@" | node "$REPO_DIR/index.js" >> "$name.log" 2>&1 \
+    || { cat "$name.log"; fail "$name: wizard exited non-zero"; }
+}
 
 DOWN='\x1b[B'
 
 echo '=== scenario: full (all folders, examples, build, SCSS) ==='
-feed 'full-addon\n' 'Full addon\n' 'a' '\n' 'y\n' 'n\n' 'y\n' "${DOWN}${DOWN}" '\n' \
-  | node "$REPO_DIR/index.js" > full.log 2>&1 || { cat full.log; fail 'wizard exited non-zero'; }
+scaffold full-addon 'full-addon\n' 'Full addon\n' 'a' '\n' 'y\n' 'n\n' 'y\n' "${DOWN}${DOWN}" '\n'
 
 for f in header footer orderFinale; do
   [[ -f "full-addon/src/$f/script.js" && -f "full-addon/src/$f/style.scss" ]] || fail "missing example files in src/$f"
 done
 [[ -f full-addon/webpack.config.js ]] || fail 'missing webpack.config.js'
-[[ ! -e full-addon/config.json ]] || fail 'config.json should only be generated with Bender'
+[[ -f full-addon/config.json ]] || fail 'missing config.json (generated unconditionally for Bender)'
 [[ -f full-addon/.gitignore ]] || fail 'missing .gitignore'
 [[ ! -e full-addon/yarn.lock ]] || fail 'yarn.lock should not be generated'
 [[ ! -e full-addon/dist ]] || fail 'dist/ should not be generated'
 [[ "$(pkg full-addon "scripts.build")" == '"webpack --env production"' ]] || fail 'wrong build script'
 [[ "$(pkg full-addon "scripts['build:dev']")" == '"webpack"' ]] || fail 'wrong build:dev script'
-[[ "$(pkg full-addon "devDependencies['sass-loader']")" != 'undefined' ]] || fail 'sass-loader should be installed'
-[[ "$(pkg full-addon "devDependencies['terser-webpack-plugin']")" != 'undefined' ]] || fail 'terser-webpack-plugin should be installed'
-[[ "$(pkg full-addon "devDependencies['less']")" == 'undefined' ]] || fail 'less should not be installed'
 [[ "$(pkg full-addon "private")" == 'true' ]] || fail 'generated project should be private'
 [[ "$(pkg full-addon "_id")" == 'undefined' ]] || fail '_id leaked into package.json'
+[[ "$(pkg full-addon "engines.node")" == '">=22.11.0"' ]] || fail 'generated project should declare engines'
+assert_dep full-addon sass-loader
+assert_dep full-addon terser-webpack-plugin
+assert_no_dep full-addon less
 
 echo '=== production and development builds ==='
 (
@@ -50,8 +70,11 @@ echo '=== production and development builds ==='
   printf '<div>BBB markup</div>' > src/header/b-markup.html
   printf '<div>footer markup</div>' > src/footer/markup.html
   printf '/*! test-banner v1.0 | MIT */\nconsole.log("footer with banner");\n' > src/footer/script.js
-  printf '.scss-marker { color: red; }' > src/header/style.scss
+  printf '.scss-marker { color: red; background: url("./logo.png"); }' > src/header/style.scss
   printf '.css-marker { color: green; }' > src/header/extra.css
+  printf 'header-logo-content' > src/header/logo.png
+  printf '.footer-bg { background: url("./logo.png"); }' > src/footer/style.scss
+  printf 'footer-logo-content' > src/footer/logo.png
   mkdir -p assets
   printf '<svg></svg>' > assets/logo.svg
   npm install --no-audit --no-fund --loglevel=error
@@ -65,6 +88,8 @@ echo '=== production and development builds ==='
   grep -q 'css-marker' dist/styles.header.min.css || fail 'entry-key collision fix regressed (plain CSS is missing next to the preprocessor styles)'
   grep -q '_0x' dist/scripts.header.min.js || fail 'production JS does not look obfuscated'
   [[ -z "$(find dist -name '*.LICENSE.txt' -print -quit)" ]] || fail 'license comments should not be extracted into dist'
+  logo_count=$(find dist/assets -name 'logo.*.png' | wc -l | tr -d ' ')
+  [[ "$logo_count" == "2" ]] || fail "same-named url() assets should emit 2 hashed files, got $logo_count"
   [[ "$(cat dist/markups.header.html)" == '<div>AAA markup</div>
 <div>BBB markup</div>' ]] || fail 'markup is not concatenated in alphabetical order'
   npm run build:dev
@@ -72,33 +97,31 @@ echo '=== production and development builds ==='
 )
 
 echo '=== scenario: minimal (no folders, no build) ==='
-feed 'minimal-addon\n' 'Minimal addon\n' '\n' 'n\n' 'n\n' \
-  | node "$REPO_DIR/index.js" > minimal.log 2>&1 || { cat minimal.log; fail 'wizard exited non-zero'; }
+scaffold minimal-addon 'minimal-addon\n' 'Minimal addon\n' '\n' 'n\n' 'n\n'
 
-if grep -q 'example files' minimal.log; then
+if grep -q 'example files' minimal-addon.log; then
   fail 'example question should be skipped when no folders are selected'
 fi
 [[ ! -e minimal-addon/webpack.config.js ]] || fail 'webpack.config.js should not be generated'
 [[ ! -e minimal-addon/yarn.lock ]] || fail 'yarn.lock should not be generated'
+[[ -f minimal-addon/config.json ]] || fail 'config.json should be generated unconditionally'
 [[ "$(pkg minimal-addon "scripts")" == '{}' ]] || fail 'scripts should be empty'
 
 echo '=== scenario: LESS flavour with Bender (scaffold only) ==='
-feed 'less-addon\n' 'Less addon\n' 'a' '\n' 'y\n' 'y\n' 'https://classic.shoptet.cz/some/path?x=1\n' 'y\n' "$DOWN" '\n' \
-  | node "$REPO_DIR/index.js" > less.log 2>&1 || { cat less.log; fail 'wizard exited non-zero'; }
+scaffold less-addon 'less-addon\n' 'Less addon\n' 'a' '\n' 'y\n' 'y\n' 'https://classic.shoptet.cz/some/path?x=1\n' 'y\n' "$DOWN" '\n'
 
 [[ -f less-addon/src/header/style.less ]] || fail 'missing style.less example'
-[[ -f less-addon/config.json ]] || fail 'config.json should be generated with Bender'
+[[ -f less-addon/config.json ]] || fail 'missing config.json'
 [[ "$(pkg less-addon "scripts.dev")" == '"shp-bender --remote https://classic.shoptet.cz"' ]] || fail 'dev script should contain the normalized e-shop origin'
-[[ "$(pkg less-addon "devDependencies['less-loader']")" != 'undefined' ]] || fail 'less-loader should be installed'
-[[ "$(pkg less-addon "devDependencies['sass']")" == 'undefined' ]] || fail 'sass should not be installed'
+assert_dep less-addon less-loader
+assert_no_dep less-addon sass
 
 echo '=== scenario: CSS flavour (scaffold only) ==='
-feed 'css-addon\n' 'Css addon\n' 'a' '\n' 'y\n' 'n\n' 'y\n' '\n' \
-  | node "$REPO_DIR/index.js" > css.log 2>&1 || { cat css.log; fail 'wizard exited non-zero'; }
+scaffold css-addon 'css-addon\n' 'Css addon\n' 'a' '\n' 'y\n' 'n\n' 'y\n' '\n'
 
 [[ -f css-addon/src/header/style.css ]] || fail 'missing style.css example'
-[[ "$(pkg css-addon "devDependencies['sass']")" == 'undefined' ]] || fail 'sass should not be installed'
-[[ "$(pkg css-addon "devDependencies['less']")" == 'undefined' ]] || fail 'less should not be installed'
+assert_no_dep css-addon sass
+assert_no_dep css-addon less
 [[ "$(pkg css-addon "engines.node")" == '">=22.11.0"' ]] || fail 'generated project should declare engines'
 
 echo 'OK: all smoke tests passed'

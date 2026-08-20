@@ -21,13 +21,13 @@ npx shoptet/create-visual-addon-boilerplate
 
 This will launch a wizard that will guide you through the process of creating a new project. The wizard asks:
 
-1. **Addon name** — used as the project folder and package name (letters, numbers, underscores, and hyphens).
+1. **Addon name** — used as the project folder and package name (lowercase letters, numbers, underscores, and hyphens, starting with a letter or a number).
 2. **Addon description**
 3. **Folders to initialize** — `header`, `footer`, and `orderFinale`; they correspond to the three code fields in the Shoptet administration.
 4. **Example files** — pre-fills the selected folders with an example script and stylesheet (asked only when you selected some folders).
 5. **Shoptet Bender** — adds [Shoptet Bender](https://github.com/shoptet/shoptet-bender) for local development against a live e-shop (you will be asked for the e-shop URL).
 6. **Build process** — adds a webpack build pipeline (see [Build](#build) below).
-7. **Stylesheet format** — CSS, LESS, or SCSS; only the chosen preprocessor is installed (asked when you chose example files or the build process).
+7. **Stylesheet format** — CSS, LESS, or SCSS; example files follow the chosen format, and when you also choose the build process, only the matching preprocessor is installed (asked when you chose example files or the build process).
 
 Once the wizard is complete, install the dependencies with your preferred package manager:
 
@@ -47,7 +47,7 @@ my-addon/
 │  ├─ footer/       # deployed to the "footer" field
 │  └─ orderFinale/  # deployed to the "order finale" field
 ├─ assets/          # optional static files (fonts, images), deployed as-is
-├─ config.json      # Shoptet Bender configuration (created when you choose Bender)
+├─ config.json      # Shoptet Bender configuration
 ├─ webpack.config.js # created when you choose the build process
 └─ package.json
 ```

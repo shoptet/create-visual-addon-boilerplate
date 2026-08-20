@@ -12,7 +12,8 @@ import RemoveEmptyScriptsPlugin from 'webpack-remove-empty-scripts';
 
 const outputDir = path.resolve(process.cwd(), 'dist');
 
-// The three folders correspond to the code fields in the Shoptet administration
+// The three folders correspond to the code fields in the Shoptet administration.
+// Keep in sync with the wizard checkbox in index.js (and the README diagram).
 const folders = ['header', 'footer', 'orderFinale'];
 
 const extensionsFilenames = {
@@ -49,6 +50,8 @@ class MarkupPlugin {
             const folderPath = path.resolve('src', folder);
             if (fs.existsSync(folderPath)) {
               compilation.contextDependencies.add(folderPath);
+            } else {
+              compilation.missingDependencies.add(folderPath);
             }
             const files = globSync(`./src/${folder}/**/*.html`).sort();
             if (files.length > 0) {
@@ -123,7 +126,9 @@ export default env => {
           test: /\.(png|jpe?g|gif|svg|woff2?|ttf|eot)$/,
           type: 'asset/resource',
           generator: {
-            filename: 'assets/[name][ext]',
+            // The content hash prevents same-named files from different src
+            // folders from colliding on one output path (a hard build error)
+            filename: 'assets/[name].[contenthash:8][ext]',
           },
         },
       ],
