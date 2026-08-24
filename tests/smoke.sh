@@ -13,21 +13,24 @@ pkg() { node -p "JSON.stringify(require('./$1/package.json').$2)"; }
 assert_dep() { [[ "$(pkg "$1" "devDependencies['$2']")" != 'undefined' ]] || fail "$1: $2 should be installed"; }
 assert_no_dep() { [[ "$(pkg "$1" "devDependencies['$2']")" == 'undefined' ]] || fail "$1: $2 should not be installed"; }
 
-# Sends each chunk once the wizard's output has gone idle (the active prompt
-# is rendered and waiting for input) instead of relying on fixed sleeps.
+# Sends each chunk once the wizard has visibly reacted to the previous one
+# (the log grew past the size captured at the previous send) and the output
+# has gone idle again — no fixed sleeps, no answering a stale prompt.
 feed() {
   local logfile="$1"
   shift
+  local baseline=0
   for chunk in "$@"; do
     local prev=-1 size=0 tries=0
     while :; do
       size=$(wc -c < "$logfile" 2>/dev/null || echo 0)
-      [[ "$size" -gt 0 && "$size" -eq "$prev" ]] && break
+      [[ "$size" -gt "$baseline" && "$size" -eq "$prev" ]] && break
       prev=$size
-      [[ $((++tries)) -gt 300 ]] && break # 30s safety net per chunk
+      [[ $((++tries)) -gt 300 ]] && fail "timed out waiting for a prompt (log stuck at $size bytes)"
       sleep 0.1
     done
     printf '%b' "$chunk"
+    baseline=$size
   done
   sleep 2 # keep stdin open while the wizard writes the project
 }
@@ -51,6 +54,7 @@ for f in header footer orderFinale; do
 done
 [[ -f full-addon/webpack.config.js ]] || fail 'missing webpack.config.js'
 [[ -f full-addon/config.json ]] || fail 'missing config.json (generated unconditionally for Bender)'
+[[ "$(node -p "JSON.parse(require('fs').readFileSync('full-addon/config.json','utf8')).defaultUrl")" == 'https://classic.shoptet.cz' ]] || fail 'config.json without Bender should keep the template defaultUrl'
 [[ -f full-addon/.gitignore ]] || fail 'missing .gitignore'
 [[ ! -e full-addon/yarn.lock ]] || fail 'yarn.lock should not be generated'
 [[ ! -e full-addon/dist ]] || fail 'dist/ should not be generated'
@@ -108,11 +112,12 @@ fi
 [[ "$(pkg minimal-addon "scripts")" == '{}' ]] || fail 'scripts should be empty'
 
 echo '=== scenario: LESS flavour with Bender (scaffold only) ==='
-scaffold less-addon 'less-addon\n' 'Less addon\n' 'a' '\n' 'y\n' 'y\n' 'https://classic.shoptet.cz/some/path?x=1\n' 'y\n' "$DOWN" '\n'
+scaffold less-addon 'less-addon\n' 'Less addon\n' 'a' '\n' 'y\n' 'y\n' 'https://my-shop.example/some/path?x=1\n' 'y\n' "$DOWN" '\n'
 
 [[ -f less-addon/src/header/style.less ]] || fail 'missing style.less example'
 [[ -f less-addon/config.json ]] || fail 'missing config.json'
-[[ "$(pkg less-addon "scripts.dev")" == '"shp-bender --remote https://classic.shoptet.cz"' ]] || fail 'dev script should contain the normalized e-shop origin'
+[[ "$(node -p "JSON.parse(require('fs').readFileSync('less-addon/config.json','utf8')).defaultUrl")" == 'https://my-shop.example' ]] || fail 'config.json defaultUrl should be the entered e-shop origin'
+[[ "$(pkg less-addon "scripts.dev")" == '"shp-bender --remote https://my-shop.example"' ]] || fail 'dev script should contain the normalized e-shop origin'
 assert_dep less-addon less-loader
 assert_no_dep less-addon sass
 

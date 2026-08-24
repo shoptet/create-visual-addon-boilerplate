@@ -128,8 +128,14 @@ try {
   fs.copyFileSync(`${__dirname}/template/package.json`, `./${addonName}/package.json`);
 
   // config.json is read by Shoptet Bender (unconditionally, at import time) —
-  // copied always so that adding Bender to the project later just works
-  fs.copyFileSync(`${__dirname}/template/config.json`, `./${addonName}/config.json`);
+  // generated always so that adding Bender to the project later just works.
+  // When Bender was chosen, the entered e-shop URL becomes the default proxy
+  // target, so a plain `npx shp-bender` targets the right shop.
+  const benderConfig = JSON.parse(fs.readFileSync(`${__dirname}/template/config.json`, 'utf8'));
+  if (remoteEshopUrl) {
+    benderConfig.defaultUrl = remoteEshopUrl;
+  }
+  fs.writeFileSync(`./${addonName}/config.json`, JSON.stringify(benderConfig, null, 2) + '\n');
 
   if (initBuildTool) {
     fs.copyFileSync(`${__dirname}/template/webpack.config.js`, `./${addonName}/webpack.config.js`);
