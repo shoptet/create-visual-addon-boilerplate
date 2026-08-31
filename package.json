@@ -1,18 +1,27 @@
 {
   "name": "create-shoptet-visual-addon",
-  "version": "1.0.0",
-  "main": "index.js",
-  "repository": "https://github.com/pavelhusa/test-cli.git",
+  "version": "2.0.0",
+  "repository": "https://github.com/shoptet/create-visual-addon-boilerplate.git",
   "author": "Pavel Husa <husa@shoptet.cz>",
   "description": "Create Shoptet Visual Addon",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "run": "index.js"
+    "create-shoptet-visual-addon": "index.js"
+  },
+  "files": [
+    "index.js",
+    "template",
+    "tests"
+  ],
+  "scripts": {
+    "test": "bash tests/smoke.sh"
+  },
+  "engines": {
+    "node": "^24.15.0 || >=26.0.0"
   },
   "dependencies": {
-    "@inquirer/prompts": "^2.3.0",
-    "@npmcli/package-json": "^4.0.0",
-    "inquirer": "^9.2.7"
+    "@inquirer/prompts": "^8.5.2",
+    "@npmcli/package-json": "^8.0.0"
   }
 }
